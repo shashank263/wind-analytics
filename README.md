@@ -185,16 +185,45 @@ Example analysis request:
 ```
 
 The analysis endpoint restricts the selected dates to January 2026.
-
 ## Deployment
 
-- **Live dashboard:** Add your Vercel URL after deployment.
-- **Backend API:** Add your Render URL after deployment.
-- **Public repository:** Add your GitHub repository URL.
+- **Live Dashboard:** https://winduk.vercel.app
+- **Backend API:** https://wind-analytics-clwt.onrender.com
 
-For Vercel deployment, the frontend uses the deployed Render backend by default. To use a different backend, set `VITE_API_URL` in the Vercel project's environment variables to its origin, for example `https://your-service.onrender.com` (do not include `/api`), then redeploy. During local development, the frontend defaults to `http://127.0.0.1:8000`; you can override this with `VITE_API_URL` in a local `.env` file.
+### Frontend Deployment
+The React frontend is deployed on Vercel.
 
-Configure the backend's CORS allowed origins to include the exact deployed frontend domain. The backend currently allows `https://wind-analyticuk.vercel.app`; update the allowed origins in `backend/app/main.py` if your Vercel domain differs.
+The frontend communicates with the deployed FastAPI backend using the `VITE_API_URL` environment variable.
+
+### Backend Deployment
+The FastAPI backend is deployed on Render.
+
+The backend retrieves data from the Elexon BMRS API and provides analysis results through REST API endpoints.
+
+**Note:** The backend is hosted on Render's free instance. If it has been inactive, the first request may take a little longer while the service starts.
+
+**Step 1: Activate the Backend**
+
+Open the Render backend link first:
+
+https://wind-analytics-clwt.onrender.com/api/health
+
+Wait until you see:
+
+`{"status":"ok","service":"WindScope UK API"}`
+
+This confirms that the backend is active.
+
+**Step 2: Open the Frontend**
+
+After the backend is active, open the WindScope UK dashboard:
+
+https://winduk.vercel.app
+
+The dashboard can now request data from the backend. Subsequent requests should respond normally.
+
+### CORS Configuration
+The backend CORS configuration allows requests from the deployed frontend domain. If the frontend domain changes, update the allowed origins in `backend/app/main.py` and redeploy the backend.
 
 ## Limitations and Assumptions
 
