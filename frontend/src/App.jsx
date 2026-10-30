@@ -19,8 +19,12 @@ import {
 } from "lucide-react";
 import "./App.css";
 
-const API_URL =
-  "https://wind-analytics-clwt.onrender.com/api/analysis";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV
+    ? "http://127.0.0.1:8000"
+    : "https://wind-analytics-clwt.onrender.com");
+const API_URL = `${API_BASE_URL.replace(/\/+$/, "")}/api/analysis`;
 
 const formatNumber = (value) =>
   value == null || !Number.isFinite(Number(value))
@@ -64,17 +68,19 @@ export default function App() {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.detail || `Request failed (${response.status})`);
+        throw new Error(
+          body.detail || `Request failed (${response.status})`
+        );
       }
 
-      setResult(await response.json());
+      const data = await response.json();
+      setResult(data);
     } catch (err) {
       const backendHint = import.meta.env.DEV
         ? "Check that the Python backend is running at http://127.0.0.1:8000."
-        : "If this frontend is hosted on Vercel, set VITE_API_URL to the backend origin in the Vercel project settings and redeploy. Otherwise, check the API proxy and backend.";
-      setError(
-        `${err.message}. ${backendHint}`
-      );
+        : "Check that the Render backend is available and that its CORS settings allow this Vercel domain.";
+
+      setError(`${err.message}. ${backendHint}`);
       setResult(null);
     } finally {
       setLoading(false);
@@ -130,10 +136,12 @@ export default function App() {
     const url = URL.createObjectURL(
       new Blob([csv], { type: "text/csv;charset=utf-8;" })
     );
+
     const link = document.createElement("a");
     link.href = url;
     link.download = `windscope-${startDate}-to-${endDate}.csv`;
     link.click();
+
     URL.revokeObjectURL(url);
   }
 
@@ -141,7 +149,9 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon"><Wind size={23} /></div>
+          <div className="brand-icon">
+            <Wind size={23} />
+          </div>
           <div>
             <strong>WindScope</strong>
             <span>UK WIND INTELLIGENCE</span>
@@ -149,6 +159,7 @@ export default function App() {
         </div>
 
         <div className="sidebar-label">WORKSPACE</div>
+
         <div className="nav-item active">
           <Activity size={18} />
           Forecast analysis
@@ -177,6 +188,7 @@ export default function App() {
               Compare day-ahead forecasts with actual wind generation.
             </p>
           </div>
+
           <div className="live-pill">
             <span className="status-dot" />
             Historical data
@@ -200,6 +212,7 @@ export default function App() {
                 onChange={(event) => setStartDate(event.target.value)}
               />
             </label>
+
             <label>
               Delivery end
               <input
@@ -210,6 +223,7 @@ export default function App() {
                 onChange={(event) => setEndDate(event.target.value)}
               />
             </label>
+
             <label>
               Previous-day cutoff (UTC)
               <input
@@ -218,15 +232,20 @@ export default function App() {
                 onChange={(event) => setCutoff(event.target.value)}
               />
             </label>
+
             <button
               className="primary-button"
               onClick={loadAnalysis}
               disabled={loading}
             >
-              <RefreshCw size={16} className={loading ? "spin" : ""} />
+              <RefreshCw
+                size={16}
+                className={loading ? "spin" : ""}
+              />
               {loading ? "Loading…" : "Run analysis"}
             </button>
           </div>
+
           <p className="helper-text">
             The 16:00 UTC default is a configurable pilot assumption, not a
             verified market deadline. Metrics use only matched hourly intervals.
@@ -241,7 +260,9 @@ export default function App() {
         )}
 
         {loading && !result && (
-          <div className="loading-panel">Retrieving Elexon data…</div>
+          <div className="loading-panel">
+            Retrieving Elexon data…
+          </div>
         )}
 
         <section className="metrics-grid">
@@ -251,18 +272,21 @@ export default function App() {
             unit="MW"
             description="Average absolute forecast error"
           />
+
           <MetricCard
             label="Root mean squared error"
             value={formatNumber(metrics.rmse_mw)}
             unit="MW"
             description="Penalises larger forecast errors"
           />
+
           <MetricCard
             label="Forecast bias"
             value={formatNumber(metrics.bias_mw)}
             unit="MW"
             description="Positive means forecast exceeded actual"
           />
+
           <MetricCard
             label="Weighted absolute error"
             value={formatNumber(metrics.wape_percent)}
@@ -275,8 +299,11 @@ export default function App() {
           <div className="panel-heading">
             <div>
               <h2>Actual vs forecast generation</h2>
-              <p>Hourly average wind generation · MW · timestamps in UTC</p>
+              <p>
+                Hourly average wind generation · MW · timestamps in UTC
+              </p>
             </div>
+
             <span className="interval-badge">
               {coverage.matched_intervals ?? 0} matched intervals
             </span>
@@ -287,34 +314,76 @@ export default function App() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id="actualFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#087f8c" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#087f8c" stopOpacity={0} />
+                    <linearGradient
+                      id="actualFill"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#087f8c"
+                        stopOpacity={0.2}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="#087f8c"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
-                    <linearGradient id="forecastFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#e7a33e" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#e7a33e" stopOpacity={0} />
+
+                    <linearGradient
+                      id="forecastFill"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="#e7a33e"
+                        stopOpacity={0.2}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="#e7a33e"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#e8edf2" strokeDasharray="4 4" />
+
+                  <CartesianGrid
+                    stroke="#e8edf2"
+                    strokeDasharray="4 4"
+                  />
+
                   <XAxis
                     dataKey="time"
                     tick={{ fontSize: 11 }}
                     minTickGap={28}
                   />
+
                   <YAxis
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(value) => `${value.toLocaleString()} MW`}
+                    tickFormatter={(value) =>
+                      `${value.toLocaleString()} MW`
+                    }
                     width={85}
                   />
+
                   <Tooltip
-                    formatter={(value) => [`${formatNumber(value)} MW`]}
+                    formatter={(value) => [
+                      `${formatNumber(value)} MW`,
+                    ]}
                     contentStyle={{
                       borderRadius: 10,
                       border: "1px solid #e4eaf0",
                     }}
                   />
+
                   <Legend />
+
                   <Area
                     type="monotone"
                     dataKey="actual_mw"
@@ -325,6 +394,7 @@ export default function App() {
                     dot={false}
                     connectNulls={false}
                   />
+
                   <Area
                     type="monotone"
                     dataKey="forecast_mw"
@@ -353,18 +423,22 @@ export default function App() {
         <section className="coverage-grid">
           <div className="panel coverage-card">
             <h2>Data coverage</h2>
+
             <div className="coverage-row">
               <span>Actual hourly intervals</span>
               <strong>{coverage.actual_hourly_intervals ?? "—"}</strong>
             </div>
+
             <div className="coverage-row">
               <span>Eligible forecast intervals</span>
               <strong>{coverage.eligible_forecast_intervals ?? "—"}</strong>
             </div>
+
             <div className="coverage-row">
               <span>Matched intervals</span>
               <strong>{coverage.matched_intervals ?? "—"}</strong>
             </div>
+
             <div className="coverage-row">
               <span>Unmatched actual intervals</span>
               <strong>{coverage.unmatched_actual_intervals ?? "—"}</strong>
@@ -373,14 +447,17 @@ export default function App() {
 
           <div className="panel method-card">
             <h2>Methodology</h2>
+
             <p>
               <strong>Actuals:</strong> Elexon FUELHH wind records, averaged
               from half-hourly MW values into hourly values.
             </p>
+
             <p>
               <strong>Forecasts:</strong> Elexon WINDFOR publications, choosing
               the latest available version at or before the previous-day cutoff.
             </p>
+
             <p>
               <strong>Limit:</strong> This dashboard evaluates forecast accuracy.
               It does not calculate a procurement position because demand,
@@ -395,6 +472,7 @@ export default function App() {
               <h2>Hourly audit table</h2>
               <p>Inspect the source-aligned values behind the metrics.</p>
             </div>
+
             <button
               className="secondary-button"
               onClick={downloadCsv}
@@ -415,27 +493,44 @@ export default function App() {
                   <th>Error (MW)</th>
                 </tr>
               </thead>
+
               <tbody>
                 {(result?.data || []).slice(0, 100).map((row) => (
                   <tr key={row.startTime}>
-                    <td>{row.startTime.replace("T", " ").replace("Z", "")}</td>
-                    <td>{row.publishTime.replace("T", " ").replace("Z", "")}</td>
+                    <td>
+                      {row.startTime.replace("T", " ").replace("Z", "")}
+                    </td>
+                    <td>
+                      {row.publishTime.replace("T", " ").replace("Z", "")}
+                    </td>
                     <td>{formatNumber(row.actual_mw)}</td>
                     <td>{formatNumber(row.forecast_mw)}</td>
-                    <td className={row.error_mw > 0 ? "positive" : row.error_mw < 0 ? "negative" : ""}>
+                    <td
+                      className={
+                        row.error_mw > 0
+                          ? "positive"
+                          : row.error_mw < 0
+                            ? "negative"
+                            : ""
+                      }
+                    >
                       {formatNumber(row.error_mw)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
             {result?.data?.length > 100 && (
               <p className="helper-text">
                 Showing the first 100 rows. Export CSV for all matched intervals.
               </p>
             )}
+
             {result && result.data.length === 0 && (
-              <p className="table-empty">No matched records to display.</p>
+              <p className="table-empty">
+                No matched records to display.
+              </p>
             )}
           </div>
         </section>
