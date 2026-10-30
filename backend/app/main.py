@@ -22,7 +22,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "https://winduk.vercel.app",
-        "https://winduk-gs9iegigm-saishashanks-projects.vercel.app"
+        "https://winduk-llspcekd3-saishashanks-projects.vercel.app"
     ],
     allow_credentials=False,
     allow_methods=["GET"],
