@@ -192,7 +192,9 @@ The analysis endpoint restricts the selected dates to January 2026.
 - **Backend API:** Add your Render URL after deployment.
 - **Public repository:** Add your GitHub repository URL.
 
-For Vercel deployment, configure the frontend API base URL to point to the deployed Render backend and configure the backend's CORS allowed origins to include the deployed frontend domain.
+For Vercel deployment, add `VITE_API_URL` to the frontend project's environment variables and set it to the deployed backend origin, for example `https://your-service.onrender.com` (do not include `/api`). The frontend appends `/api/analysis` automatically. Redeploy the frontend after changing the variable. Without this setting, the frontend requests `/api/analysis` from the Vercel host, which returns 404 unless a proxy rewrite is configured.
+
+Configure the backend's CORS allowed origins to include the exact deployed frontend domain. The backend currently allows `https://wind-analyticuk.vercel.app`; update the allowed origins in `backend/app/main.py` if your Vercel domain differs.
 
 ## Limitations and Assumptions
 

@@ -72,8 +72,11 @@ export default function App() {
 
       setResult(await response.json());
     } catch (err) {
+      const backendHint = import.meta.env.DEV
+        ? "Check that the Python backend is running at http://127.0.0.1:8000."
+        : "If this frontend is hosted on Vercel, set VITE_API_URL to the backend origin in the Vercel project settings and redeploy. Otherwise, check the API proxy and backend.";
       setError(
-        `${err.message}. Check that the Python backend is running at http://127.0.0.1:8000.`
+        `${err.message}. ${backendHint}`
       );
       setResult(null);
     } finally {
